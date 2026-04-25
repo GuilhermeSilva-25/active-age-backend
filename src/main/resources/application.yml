@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: ActiveAge
+
+  config:
+    import: optional:file:.env[.properties]
+
+  data:
+    mongodb:
+      uri: ${MONGO_URI}
+
+server:
+  port: 8080
