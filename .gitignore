@@ -1,0 +1,20 @@
+# === Spring Boot & Java ===
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# === IDEs ===
+.idea/
+*.iml
+.vscode/
+*.sublime-workspace
+
+# === Logs & OS ===
+*.log
+.DS_Store
+Thumbs.db
+
+# === Variaveis de Ambiente / Segredos ===
+.env
+application-secret.yml
