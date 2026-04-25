@@ -28,7 +28,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        // Libera cadastro E login
                         .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .anyRequest().authenticated()
                 );
 
