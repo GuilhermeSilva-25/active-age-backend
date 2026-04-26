@@ -12,11 +12,15 @@ import java.time.LocalDateTime;
 public class Agendamento {
     @Id
     private String id;
+
     private String medicoId;
     private String medicoNome;
     private String medicoCrm;
     private String medicoEspecializacao;
+
     private String pacienteId;
+    private String pacienteNome;
+
     private LocalDateTime dataHora;
     private StatusAgendamento status;
     private String linkTeleconsulta;

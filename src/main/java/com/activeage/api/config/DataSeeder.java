@@ -1,7 +1,9 @@
 package com.activeage.api.config;
 
+import com.activeage.api.enums.StatusAgendamento;
 import com.activeage.api.enums.StatusValidacao;
 import com.activeage.api.enums.TipoUsuario;
+import com.activeage.api.model.Agendamento;
 import com.activeage.api.model.Usuario;
 import com.activeage.api.repository.AgendamentoRepository;
 import com.activeage.api.repository.UsuarioRepository;
@@ -11,6 +13,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
 @Configuration
@@ -30,41 +34,22 @@ public class DataSeeder {
                 System.out.println("🌱 [DATA SEEDER] Semeando médicos e agendas...");
                 String senhaPadrao = passwordEncoder.encode("senha123");
 
-                Usuario m1 = criarMedico("Dr. Carlos Mendes", "carlos@med.com", senhaPadrao, "111/SP", "11988887777", "Cardiologia");
-                Usuario m2 = criarMedico("Dra. Ana Silveira", "ana@med.com", senhaPadrao, "222/RJ", "21977776666", "Neurologia");
-                Usuario m3 = criarMedico("Dr. Roberto Justus", "roberto@med.com", senhaPadrao, "333/MG", "31966665555", "Nutrologia");
-                Usuario m4 = criarMedico("Dra. Fernanda Montenegro", "fernanda@med.com", senhaPadrao, "444/RS", "51955554444", "Psiquiatria");
-                Usuario m5 = criarMedico("Dr. Drauzio Varella", "drauzio@med.com", senhaPadrao, "555/SP", "11944443333", "Oncologia");
-                Usuario m6 = criarMedico("Dra. Silvia Santos", "silvia@med.com", senhaPadrao, "666/SP", "11911112222", "Psiquiatria, Cardiologia");
-                Usuario m7 = criarMedico("Dr. Pedro Bial", "pedro@med.com", senhaPadrao, "777/RJ", "21922223333", "");
-                Usuario m8 = criarMedico("Dra. Laura Cardoso", "laura@med.com", senhaPadrao, "888/MG", "31933334444", "Ortopedia");
-                Usuario m9 = criarMedico("Dr. Gilberto Gil", "gilberto@med.com", senhaPadrao, "999/BA", "21944445555", "Pneumologia");
-                Usuario m10 = criarMedico("Dra. Hebe Camargo", "hebe@med.com", senhaPadrao, "101/SP", "11955556666", "Cardiologia, Nutrologia");
-                Usuario m11 = criarMedico("Dr. Silvio Santos", "silvios@med.com", senhaPadrao, "112/SP", "11955556666", "Neurologia");
-                Usuario m12 = criarMedico("Dra. Rita Lee", "rita@med.com", senhaPadrao, "113/SP", "11955556666", "Reumatologia");
-                Usuario m13 = criarMedico("Dr. Faustão", "fausto@med.com", senhaPadrao, "114/SP", "11955556666", "Endocrinologia");
-                Usuario m14 = criarMedico("Dra. Xuxa", "xuxa@med.com", senhaPadrao, "115/SP", "11955556666", "");
-                Usuario m15 = criarMedico("Dr. Gugu", "gugu@med.com", senhaPadrao, "116/SP", "11955556666", "Cardiologia");
+                Usuario m1 = criarMedico("Dr. Carlos Mendes", "carlos@med.com", senhaPadrao, "111222/SP", "11988887777", "Cardiologia");
+                Usuario m2 = criarMedico("Dra. Ana Silveira", "ana@med.com", senhaPadrao, "333444/RJ", "21977776666", "Neurologia");
+                Usuario m3 = criarMedico("Dr. Pedro Bial", "pedro@med.com", senhaPadrao, "555666/RJ", "21922223333", "Sem Agenda");
 
-                usuarioRepository.saveAll(Arrays.asList(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15));
-                java.time.LocalDateTime amanha = java.time.LocalDateTime.now().plusDays(1).withHour(9).withMinute(0);
+                usuarioRepository.saveAll(Arrays.asList(m1, m2, m3));
 
-                com.activeage.api.model.Agendamento a1 = criarSlot(m1.getId(), amanha);
-                com.activeage.api.model.Agendamento a2 = criarSlot(m1.getId(), amanha.plusHours(1));
-                com.activeage.api.model.Agendamento a3 = criarSlot(m2.getId(), amanha.plusHours(2));
+                LocalDateTime amanha = LocalDateTime.now().plusDays(1).withHour(9).withMinute(0).truncatedTo(ChronoUnit.MINUTES);
+
+                Agendamento a1 = criarSlot(m1, amanha);
+                Agendamento a2 = criarSlot(m1, amanha.plusHours(1));
+                Agendamento a3 = criarSlot(m2, amanha.plusHours(2));
 
                 agendamentoRepository.saveAll(Arrays.asList(a1, a2, a3));
-                System.out.println("✅ [DATA SEEDER] Médicos e Agendas inseridos!");
+                System.out.println("✅ [DATA SEEDER] Médicos e Agendas inseridos (Agora com CRM e Especialidade corretos)!");
             }
         };
-    }
-
-    private com.activeage.api.model.Agendamento criarSlot(String medicoId, java.time.LocalDateTime dataHora) {
-        com.activeage.api.model.Agendamento a = new com.activeage.api.model.Agendamento();
-        a.setMedicoId(medicoId);
-        a.setDataHora(dataHora);
-        a.setStatus(com.activeage.api.enums.StatusAgendamento.DISPONIVEL);
-        return a;
     }
 
     private Usuario criarMedico(String nome, String email, String senha, String crm, String telefone, String especializacao) {
@@ -78,5 +63,16 @@ public class DataSeeder {
         medico.setEspecializacao(especializacao.isEmpty() ? "Geriatria" : "Geriatria, " + especializacao);
         medico.setStatusValidacao(StatusValidacao.APROVADO);
         return medico;
+    }
+
+    private Agendamento criarSlot(Usuario medico, LocalDateTime dataHora) {
+        Agendamento a = new Agendamento();
+        a.setMedicoId(medico.getId());
+        a.setMedicoNome(medico.getNome());
+        a.setMedicoCrm(medico.getCrm());
+        a.setMedicoEspecializacao(medico.getEspecializacao());
+        a.setDataHora(dataHora);
+        a.setStatus(StatusAgendamento.DISPONIVEL);
+        return a;
     }
 }

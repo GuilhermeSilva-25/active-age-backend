@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,7 +32,8 @@ public class AgendamentoService {
             a.setMedicoNome(medico.getNome());
             a.setMedicoCrm(medico.getCrm());
             a.setMedicoEspecializacao(medico.getEspecializacao());
-            a.setDataHora(horario);
+            // Trunca os segundos logo na criação para garantir a pureza da agenda
+            a.setDataHora(horario.truncatedTo(ChronoUnit.MINUTES));
             a.setStatus(StatusAgendamento.DISPONIVEL);
             return a;
         }).toList();
@@ -47,15 +49,22 @@ public class AgendamentoService {
             throw new RuntimeException("Este horário não está mais disponível.");
         }
 
-        List<Agendamento> conflitos = agendamentoRepository.findByPacienteIdOrderByDataHoraAsc(pacienteId);
-        boolean jaOcupado = conflitos.stream()
-                .anyMatch(c -> c.getStatus() == StatusAgendamento.AGENDADO && c.getDataHora().equals(agenda.getDataHora()));
+        Usuario paciente = usuarioRepository.findById(pacienteId)
+                .orElseThrow(() -> new RuntimeException("Paciente não encontrado"));
+
+        LocalDateTime horaDesejada = agenda.getDataHora().truncatedTo(ChronoUnit.MINUTES);
+
+        List<Agendamento> consultasPaciente = agendamentoRepository.findByPacienteIdOrderByDataHoraAsc(pacienteId);
+        boolean jaOcupado = consultasPaciente.stream()
+                .anyMatch(c -> c.getStatus() == StatusAgendamento.AGENDADO &&
+                        c.getDataHora().truncatedTo(ChronoUnit.MINUTES).equals(horaDesejada));
 
         if (jaOcupado) {
             throw new RuntimeException("Você já possui uma consulta agendada para este mesmo horário com outro profissional.");
         }
 
         agenda.setPacienteId(pacienteId);
+        agenda.setPacienteNome(paciente.getNome());
         agenda.setStatus(StatusAgendamento.AGENDADO);
         agenda.setLinkTeleconsulta("https://activeage.me/sala/" + UUID.randomUUID().toString().substring(0, 8));
 
@@ -72,6 +81,7 @@ public class AgendamentoService {
         if (usuario.getTipo() == TipoUsuario.PACIENTE) {
             agenda.setStatus(StatusAgendamento.DISPONIVEL);
             agenda.setPacienteId(null);
+            agenda.setPacienteNome(null);
             agenda.setLinkTeleconsulta(null);
         } else {
             agenda.setStatus(StatusAgendamento.CANCELADO_PELO_MEDICO);
