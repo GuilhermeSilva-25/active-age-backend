@@ -22,9 +22,13 @@ public class AgendamentoService {
     private final UsuarioRepository usuarioRepository;
 
     public List<Agendamento> criarHorarios(String medicoId, AgendamentoRequestDTO dto) {
+        Usuario medico = usuarioRepository.findById(medicoId)
+                .orElseThrow(() -> new RuntimeException("Médico não encontrado"));
+
         List<Agendamento> novosHorarios = dto.horarios().stream().map(horario -> {
             Agendamento a = new Agendamento();
             a.setMedicoId(medicoId);
+            a.setMedicoNome(medico.getNome());
             a.setDataHora(horario);
             a.setStatus(StatusAgendamento.DISPONIVEL);
             return a;
@@ -39,6 +43,14 @@ public class AgendamentoService {
 
         if (agenda.getStatus() != StatusAgendamento.DISPONIVEL) {
             throw new RuntimeException("Este horário não está mais disponível.");
+        }
+
+        List<Agendamento> consultasPaciente = agendamentoRepository.findByPacienteIdOrderByDataHoraAsc(pacienteId);
+        boolean horarioOcupado = consultasPaciente.stream()
+                .anyMatch(c -> c.getStatus() == StatusAgendamento.AGENDADO && c.getDataHora().equals(agenda.getDataHora()));
+
+        if (horarioOcupado) {
+            throw new RuntimeException("Você já possui uma consulta agendada para este mesmo horário com outro profissional.");
         }
 
         agenda.setPacienteId(pacienteId);

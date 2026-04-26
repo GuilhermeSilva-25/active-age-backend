@@ -13,6 +13,7 @@ public class Agendamento {
     @Id
     private String id;
     private String medicoId;
+    private String medicoNome;
     private String pacienteId;
     private LocalDateTime dataHora;
     private StatusAgendamento status;
