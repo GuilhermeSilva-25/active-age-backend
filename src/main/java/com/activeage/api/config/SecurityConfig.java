@@ -27,8 +27,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        // Libera temporariamente as rotas de validação para teste de integração UC03
                         .requestMatchers("/api/validacoes/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/perfil/**").permitAll()
                         .anyRequest().authenticated()
                 );
 

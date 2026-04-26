@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# === Variaveis de Ambiente / Segredos ===
+.env
+application-secret.yml

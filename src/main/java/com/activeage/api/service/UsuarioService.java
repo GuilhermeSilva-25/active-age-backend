@@ -1,6 +1,7 @@
 package com.activeage.api.service;
 
 import com.activeage.api.dto.UsuarioRegistroDTO;
+import com.activeage.api.dto.UsuarioUpdateDTO;
 import com.activeage.api.enums.StatusValidacao;
 import com.activeage.api.enums.TipoUsuario;
 import com.activeage.api.model.Usuario;
@@ -36,5 +37,35 @@ public class UsuarioService {
         }
 
         return usuarioRepository.save(novoUsuario);
+    }
+
+    public Usuario atualizarPerfil(String id, UsuarioUpdateDTO dto) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        if (dto.nome() != null && !dto.nome().isBlank()) {
+            usuario.setNome(dto.nome());
+        }
+
+        if (dto.telefone() != null) {
+            usuario.setTelefone(dto.telefone());
+        }
+
+        if (usuario.getTipo() == TipoUsuario.MEDICO && dto.crm() != null) {
+
+            if (usuario.getStatusValidacao() == StatusValidacao.APROVADO ||
+                    usuario.getStatusValidacao() == StatusValidacao.EM_ANALISE) {
+                throw new RuntimeException("O CRM não pode ser alterado durante ou após a análise.");
+            }
+
+            usuario.setCrm(dto.crm());
+
+            if (usuario.getStatusValidacao() == StatusValidacao.REPROVADO) {
+                usuario.setStatusValidacao(StatusValidacao.PENDENTE);
+                usuario.setMensagemValidacao(null);
+            }
+        }
+
+        return usuarioRepository.save(usuario);
     }
 }
