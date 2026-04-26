@@ -50,7 +50,7 @@ public class UsuarioService {
         if (dto.telefone() != null) usuario.setTelefone(dto.telefone());
 
         if (usuario.getTipo() == TipoUsuario.MEDICO) {
-            if (dto.crm() != null) {
+            if (dto.crm() != null && !dto.crm().equals(usuario.getCrm())) {
                 if (usuario.getStatusValidacao() == StatusValidacao.APROVADO || usuario.getStatusValidacao() == StatusValidacao.EM_ANALISE) {
                     throw new RuntimeException("O CRM não pode ser alterado durante ou após a análise.");
                 }
@@ -60,6 +60,7 @@ public class UsuarioService {
                     usuario.setMensagemValidacao(null);
                 }
             }
+
             if (dto.especializacao() != null) {
                 usuario.setEspecializacao(formatarEspecializacao(dto.especializacao()));
             }
