@@ -25,6 +25,7 @@ public record UsuarioRegistroDTO(
         TipoUsuario tipo,
 
         String cpf,
-        String crm
+        String crm,
+        String telefone
 ) {
 }

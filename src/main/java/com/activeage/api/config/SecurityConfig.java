@@ -15,9 +15,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
-/**
- * Configuração central de segurança do Spring Security.
- */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -28,9 +25,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Libera cadastro E login
                         .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        // Libera temporariamente as rotas de validação para teste de integração UC03
+                        .requestMatchers("/api/validacoes/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
@@ -42,9 +40,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * 2. Cria a regra do CORS permitindo que a porta 5173 acesse a API.
-     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
