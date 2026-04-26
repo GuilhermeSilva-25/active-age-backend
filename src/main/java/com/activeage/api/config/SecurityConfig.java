@@ -30,6 +30,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/validacoes/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/perfil/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/usuarios/medicos").permitAll()
+                        .requestMatchers("/api/validacoes/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/perfil/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios/medicos").permitAll()
+                        .requestMatchers("/api/agendamentos/**").permitAll()
                         .anyRequest().authenticated()
                 );
 

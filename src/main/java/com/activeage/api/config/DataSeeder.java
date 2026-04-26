@@ -3,6 +3,7 @@ package com.activeage.api.config;
 import com.activeage.api.enums.StatusValidacao;
 import com.activeage.api.enums.TipoUsuario;
 import com.activeage.api.model.Usuario;
+import com.activeage.api.repository.AgendamentoRepository;
 import com.activeage.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -18,6 +19,7 @@ public class DataSeeder {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AgendamentoRepository agendamentoRepository;
 
     @Bean
     public CommandLineRunner initDatabase() {
@@ -25,7 +27,7 @@ public class DataSeeder {
             long qtdMedicos = usuarioRepository.findAll().stream().filter(u -> u.getTipo() == TipoUsuario.MEDICO).count();
 
             if (qtdMedicos == 0) {
-                System.out.println("🌱 [DATA SEEDER] Semeando 15 médicos fictícios...");
+                System.out.println("🌱 [DATA SEEDER] Semeando médicos e agendas...");
                 String senhaPadrao = passwordEncoder.encode("senha123");
 
                 Usuario m1 = criarMedico("Dr. Carlos Mendes", "carlos@med.com", senhaPadrao, "111/SP", "11988887777", "Cardiologia");
@@ -45,9 +47,24 @@ public class DataSeeder {
                 Usuario m15 = criarMedico("Dr. Gugu", "gugu@med.com", senhaPadrao, "116/SP", "11955556666", "Cardiologia");
 
                 usuarioRepository.saveAll(Arrays.asList(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15));
-                System.out.println("✅ [DATA SEEDER] 15 Médicos inseridos com sucesso!");
+                java.time.LocalDateTime amanha = java.time.LocalDateTime.now().plusDays(1).withHour(9).withMinute(0);
+
+                com.activeage.api.model.Agendamento a1 = criarSlot(m1.getId(), amanha);
+                com.activeage.api.model.Agendamento a2 = criarSlot(m1.getId(), amanha.plusHours(1));
+                com.activeage.api.model.Agendamento a3 = criarSlot(m2.getId(), amanha.plusHours(2));
+
+                agendamentoRepository.saveAll(Arrays.asList(a1, a2, a3));
+                System.out.println("✅ [DATA SEEDER] Médicos e Agendas inseridos!");
             }
         };
+    }
+
+    private com.activeage.api.model.Agendamento criarSlot(String medicoId, java.time.LocalDateTime dataHora) {
+        com.activeage.api.model.Agendamento a = new com.activeage.api.model.Agendamento();
+        a.setMedicoId(medicoId);
+        a.setDataHora(dataHora);
+        a.setStatus(com.activeage.api.enums.StatusAgendamento.DISPONIVEL);
+        return a;
     }
 
     private Usuario criarMedico(String nome, String email, String senha, String crm, String telefone, String especializacao) {
