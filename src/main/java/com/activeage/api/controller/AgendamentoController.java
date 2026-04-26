@@ -40,4 +40,14 @@ public class AgendamentoController {
     public ResponseEntity<Agendamento> cancelarConsulta(@PathVariable String agendamentoId, @PathVariable String usuarioId) {
         return ResponseEntity.ok(agendamentoService.cancelarConsulta(agendamentoId, usuarioId));
     }
+
+    @GetMapping("/paciente/{pacienteId}")
+    public ResponseEntity<List<Agendamento>> listarPorPaciente(@PathVariable String pacienteId) {
+        return ResponseEntity.ok(agendamentoRepository.findByPacienteIdOrderByDataHoraAsc(pacienteId));
+    }
+
+    @GetMapping("/medico/{medicoId}/todos")
+    public ResponseEntity<List<Agendamento>> listarPorMedico(@PathVariable String medicoId) {
+        return ResponseEntity.ok(agendamentoRepository.findByMedicoIdOrderByDataHoraAsc(medicoId));
+    }
 }
