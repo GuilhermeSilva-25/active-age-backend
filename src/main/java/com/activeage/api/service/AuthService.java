@@ -18,7 +18,11 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
 
+    /**
+     * Valida as credenciais e gera o token de acesso.
+     */
     public LoginResponseDTO realizarLogin(LoginDTO loginDTO) {
+
         Usuario usuario = usuarioRepository.findByEmail(loginDTO.email())
                 .orElseThrow(() -> new RuntimeException("E-mail não encontrado"));
 
@@ -32,7 +36,10 @@ public class AuthService {
                 usuario.getId(),
                 usuario.getNome(),
                 usuario.getEmail(),
-                usuario.getTipo()
+                usuario.getTipo(),
+                usuario.getStatusValidacao(),
+                usuario.getMensagemValidacao(),
+                usuario.getCrm()
         );
 
         return new LoginResponseDTO(token, usuarioSeguro);
