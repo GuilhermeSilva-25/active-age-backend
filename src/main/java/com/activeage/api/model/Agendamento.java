@@ -14,6 +14,8 @@ public class Agendamento {
     private String id;
     private String medicoId;
     private String medicoNome;
+    private String medicoCrm;
+    private String medicoEspecializacao;
     private String pacienteId;
     private LocalDateTime dataHora;
     private StatusAgendamento status;

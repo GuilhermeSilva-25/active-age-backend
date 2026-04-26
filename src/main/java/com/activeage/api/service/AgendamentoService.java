@@ -29,6 +29,8 @@ public class AgendamentoService {
             Agendamento a = new Agendamento();
             a.setMedicoId(medicoId);
             a.setMedicoNome(medico.getNome());
+            a.setMedicoCrm(medico.getCrm());
+            a.setMedicoEspecializacao(medico.getEspecializacao());
             a.setDataHora(horario);
             a.setStatus(StatusAgendamento.DISPONIVEL);
             return a;
@@ -45,11 +47,11 @@ public class AgendamentoService {
             throw new RuntimeException("Este horário não está mais disponível.");
         }
 
-        List<Agendamento> consultasPaciente = agendamentoRepository.findByPacienteIdOrderByDataHoraAsc(pacienteId);
-        boolean horarioOcupado = consultasPaciente.stream()
+        List<Agendamento> conflitos = agendamentoRepository.findByPacienteIdOrderByDataHoraAsc(pacienteId);
+        boolean jaOcupado = conflitos.stream()
                 .anyMatch(c -> c.getStatus() == StatusAgendamento.AGENDADO && c.getDataHora().equals(agenda.getDataHora()));
 
-        if (horarioOcupado) {
+        if (jaOcupado) {
             throw new RuntimeException("Você já possui uma consulta agendada para este mesmo horário com outro profissional.");
         }
 
