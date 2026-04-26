@@ -45,7 +45,7 @@ public class UsuarioController {
         List<Usuario> medicos = usuarioRepository.findByTipoAndStatusValidacao(TipoUsuario.MEDICO, StatusValidacao.APROVADO);
 
         List<UsuarioResponseDTO> medicosSeguros = medicos.stream().map(m -> new UsuarioResponseDTO(
-                m.getId(), m.getNome(), m.getEmail(), m.getTipo(), m.getStatusValidacao(), m.getMensagemValidacao(), m.getCrm()
+                m.getId(), m.getNome(), m.getEmail(), m.getTipo(), m.getStatusValidacao(), m.getMensagemValidacao(), m.getCrm(), m.getEspecializacao()
         )).toList();
 
         return ResponseEntity.ok(medicosSeguros);

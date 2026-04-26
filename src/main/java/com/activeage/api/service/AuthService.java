@@ -39,7 +39,8 @@ public class AuthService {
                 usuario.getTipo(),
                 usuario.getStatusValidacao(),
                 usuario.getMensagemValidacao(),
-                usuario.getCrm()
+                usuario.getCrm(),
+                usuario.getEspecializacao()
         );
 
         return new LoginResponseDTO(token, usuarioSeguro);

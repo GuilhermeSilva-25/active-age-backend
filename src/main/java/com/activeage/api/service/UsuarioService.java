@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class UsuarioService {
@@ -18,7 +21,6 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
 
     public Usuario cadastrarUsuario(UsuarioRegistroDTO dto) {
-
         if (usuarioRepository.findByEmail(dto.email()).isPresent()) {
             throw new RuntimeException("Este e-mail já está em uso.");
         }
@@ -34,6 +36,7 @@ public class UsuarioService {
 
         if (dto.tipo() == TipoUsuario.MEDICO) {
             novoUsuario.setStatusValidacao(StatusValidacao.PENDENTE);
+            novoUsuario.setEspecializacao(formatarEspecializacao(dto.especializacao()));
         }
 
         return usuarioRepository.save(novoUsuario);
@@ -43,29 +46,35 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        if (dto.nome() != null && !dto.nome().isBlank()) {
-            usuario.setNome(dto.nome());
-        }
+        if (dto.nome() != null && !dto.nome().isBlank()) usuario.setNome(dto.nome());
+        if (dto.telefone() != null) usuario.setTelefone(dto.telefone());
 
-        if (dto.telefone() != null) {
-            usuario.setTelefone(dto.telefone());
-        }
-
-        if (usuario.getTipo() == TipoUsuario.MEDICO && dto.crm() != null) {
-
-            if (usuario.getStatusValidacao() == StatusValidacao.APROVADO ||
-                    usuario.getStatusValidacao() == StatusValidacao.EM_ANALISE) {
-                throw new RuntimeException("O CRM não pode ser alterado durante ou após a análise.");
+        if (usuario.getTipo() == TipoUsuario.MEDICO) {
+            if (dto.crm() != null) {
+                if (usuario.getStatusValidacao() == StatusValidacao.APROVADO || usuario.getStatusValidacao() == StatusValidacao.EM_ANALISE) {
+                    throw new RuntimeException("O CRM não pode ser alterado durante ou após a análise.");
+                }
+                usuario.setCrm(dto.crm());
+                if (usuario.getStatusValidacao() == StatusValidacao.REPROVADO) {
+                    usuario.setStatusValidacao(StatusValidacao.PENDENTE);
+                    usuario.setMensagemValidacao(null);
+                }
             }
-
-            usuario.setCrm(dto.crm());
-
-            if (usuario.getStatusValidacao() == StatusValidacao.REPROVADO) {
-                usuario.setStatusValidacao(StatusValidacao.PENDENTE);
-                usuario.setMensagemValidacao(null);
+            if (dto.especializacao() != null) {
+                usuario.setEspecializacao(formatarEspecializacao(dto.especializacao()));
             }
         }
-
         return usuarioRepository.save(usuario);
+    }
+
+    private String formatarEspecializacao(String recebida) {
+        if (recebida == null || recebida.isBlank()) return "Geriatria";
+
+        String extrasLimpos = Arrays.stream(recebida.split(","))
+                .map(String::trim)
+                .filter(s -> !s.equalsIgnoreCase("Geriatria") && !s.isEmpty())
+                .collect(Collectors.joining(", "));
+
+        return extrasLimpos.isEmpty() ? "Geriatria" : "Geriatria, " + extrasLimpos;
     }
 }

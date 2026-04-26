@@ -22,6 +22,7 @@ public class Usuario {
     private String cpf;
     private String crm;
     private String telefone;
+    private String especializacao;
     private StatusValidacao statusValidacao;
     private String mensagemValidacao;
 }
