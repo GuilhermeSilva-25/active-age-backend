@@ -34,6 +34,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/perfil/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/usuarios/medicos").permitAll()
                         .requestMatchers("/api/agendamentos/**").permitAll()
+                        .requestMatchers("/api/agendamentos/**").permitAll()
+                        .requestMatchers("/api/prontuarios/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
