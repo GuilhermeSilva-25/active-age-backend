@@ -7,5 +7,6 @@ public record ProntuarioRequestDTO(
         String conduta,
         String receita,
         String atestado,
-        String pedidoExames
+        String pedidoExames,
+        boolean finalizar
 ) {}
