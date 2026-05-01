@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -34,12 +35,20 @@ public class ProntuarioService {
         prontuario.setAgendamentoId(agenda.getId());
         prontuario.setPacienteId(agenda.getPacienteId());
         prontuario.setMedicoId(medicoId);
+
         prontuario.setQueixaPrincipal(dto.queixaPrincipal());
         prontuario.setDiagnostico(dto.diagnostico());
         prontuario.setConduta(dto.conduta());
+
+        prontuario.setReceita(dto.receita());
+        prontuario.setAtestado(dto.atestado());
+        prontuario.setPedidoExames(dto.pedidoExames());
+
         prontuario.setDataRegistro(LocalDateTime.now());
 
         prontuario.setImutavel(true);
+        prontuario.setHashAssinatura(UUID.randomUUID().toString());
+
         Prontuario prontuarioSalvo = prontuarioRepository.save(prontuario);
 
         agenda.setStatus(StatusAgendamento.CONCLUIDO);

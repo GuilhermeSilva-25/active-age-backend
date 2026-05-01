@@ -19,6 +19,11 @@ public class Prontuario {
     private String diagnostico;
     private String conduta;
 
+    private String receita;
+    private String atestado;
+    private String pedidoExames;
+
     private boolean imutavel;
+    private String hashAssinatura;
     private LocalDateTime dataRegistro;
 }
