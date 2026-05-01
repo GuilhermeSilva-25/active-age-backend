@@ -36,6 +36,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/agendamentos/**").permitAll()
                         .requestMatchers("/api/agendamentos/**").permitAll()
                         .requestMatchers("/api/prontuarios/**").permitAll()
+                        .requestMatchers("/api/prontuarios/**").permitAll()
+                        .requestMatchers("/api/exames/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
