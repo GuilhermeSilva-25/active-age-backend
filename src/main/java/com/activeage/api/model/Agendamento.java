@@ -20,6 +20,7 @@ public class Agendamento {
 
     private String pacienteId;
     private String pacienteNome;
+    private String pacienteCpf;
 
     private LocalDateTime dataHora;
     private StatusAgendamento status;
