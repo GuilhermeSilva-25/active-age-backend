@@ -50,4 +50,21 @@ public class AgendamentoController {
     public ResponseEntity<List<Agendamento>> listarPorMedico(@PathVariable String medicoId) {
         return ResponseEntity.ok(agendamentoRepository.findByMedicoIdOrderByDataHoraAsc(medicoId));
     }
+
+
+    public record AvaliacaoDTO(Integer nota, String comentario) {}
+
+    @PutMapping("/{id}/avaliar")
+    public ResponseEntity<Agendamento> avaliarConsulta(@PathVariable String id, @RequestBody AvaliacaoDTO dto) {
+        return agendamentoRepository.findById(id).map(agenda -> {
+            agenda.setNotaAvaliacao(dto.nota());
+            agenda.setComentarioAvaliacao(dto.comentario());
+            return ResponseEntity.ok(agendamentoRepository.save(agenda));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/medico/{medicoId}/avaliacoes")
+    public ResponseEntity<List<Agendamento>> getAvaliacoesDoMedico(@PathVariable String medicoId) {
+        return ResponseEntity.ok(agendamentoRepository.findByMedicoIdAndNotaAvaliacaoIsNotNullOrderByDataHoraDesc(medicoId));
+    }
 }

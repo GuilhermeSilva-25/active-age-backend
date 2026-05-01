@@ -50,4 +50,11 @@ public class UsuarioController {
 
         return ResponseEntity.ok(medicosSeguros);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Usuario> buscarPorId(@PathVariable String id) {
+        return usuarioRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 }

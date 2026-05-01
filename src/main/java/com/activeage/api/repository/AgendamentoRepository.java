@@ -9,8 +9,7 @@ import java.util.List;
 
 public interface AgendamentoRepository extends MongoRepository<Agendamento, String> {
     List<Agendamento> findByMedicoIdAndStatusAndDataHoraAfterOrderByDataHoraAsc(String medicoId, StatusAgendamento status, LocalDateTime dataHora);
-
     List<Agendamento> findByMedicoIdOrderByDataHoraAsc(String medicoId);
-
     List<Agendamento> findByPacienteIdOrderByDataHoraAsc(String pacienteId);
+    List<Agendamento> findByMedicoIdAndNotaAvaliacaoIsNotNullOrderByDataHoraDesc(String medicoId);
 }

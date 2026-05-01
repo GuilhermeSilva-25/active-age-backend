@@ -24,4 +24,7 @@ public class Agendamento {
     private LocalDateTime dataHora;
     private StatusAgendamento status;
     private String linkTeleconsulta;
+
+    private Integer notaAvaliacao;
+    private String comentarioAvaliacao;
 }

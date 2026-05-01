@@ -25,4 +25,5 @@ public class Usuario {
     private String especializacao;
     private StatusValidacao statusValidacao;
     private String mensagemValidacao;
+    private String biografia;
 }
