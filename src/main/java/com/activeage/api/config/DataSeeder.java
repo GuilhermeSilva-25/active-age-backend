@@ -34,11 +34,19 @@ public class DataSeeder {
             long qtdMedicos = usuarioRepository.findAll().stream().filter(u -> u.getTipo() == TipoUsuario.MEDICO).count();
 
             if (qtdMedicos == 0) {
-                System.out.println("🌱 [DATA SEEDER] Semeando médicos e lotando agendas...");
+                System.out.println("🌱 [DATA SEEDER] Semeando Administrador, Médicos e lotando agendas...");
                 String senhaPadrao = passwordEncoder.encode("senha123");
 
+                Usuario admin = new Usuario();
+                admin.setNome("Administrador Active Age");
+                admin.setEmail("admin@email.com");
+                admin.setSenha(passwordEncoder.encode("admin1234"));
+                admin.setTipo(TipoUsuario.ADMIN);
+                usuarioRepository.save(admin);
+                System.out.println("👑 [DATA SEEDER] Admin criado: admin@email.com / admin1234");
+
                 Usuario pacienteDummy = new Usuario();
-                pacienteDummy.setNome("Roberto Carlos (Paciente Teste)");
+                pacienteDummy.setNome("Sr. Bug (Paciente Teste)");
                 pacienteDummy.setEmail("paciente@teste.com");
                 pacienteDummy.setSenha(senhaPadrao);
                 pacienteDummy.setTipo(TipoUsuario.PACIENTE);
@@ -46,21 +54,21 @@ public class DataSeeder {
                 usuarioRepository.save(pacienteDummy);
 
                 List<Usuario> lendasTech = Arrays.asList(
-                        criarMedico("Dr. Linus Torvalds", "linus@med.com", senhaPadrao, "000001/SP", "11900000001", "Cirurgia Vascular"),
-                        criarMedico("Dra. Ada Lovelace", "ada@med.com", senhaPadrao, "000002/SP", "11900000002", "Neurologia"),
-                        criarMedico("Dr. Alan Turing", "alan@med.com", senhaPadrao, "000003/SP", "11900000003", "Psiquiatria"),
-                        criarMedico("Dra. Grace Hopper", "grace@med.com", senhaPadrao, "000004/SP", "11900000004", "Infectologia"),
-                        criarMedico("Dr. Dennis Ritchie", "dennis@med.com", senhaPadrao, "000005/SP", "11900000005", "Ortopedia"),
-                        criarMedico("Dr. Ken Thompson", "ken@med.com", senhaPadrao, "000006/SP", "11900000006", "Clínica Médica"),
-                        criarMedico("Dra. Margaret Hamilton", "margaret@med.com", senhaPadrao, "000007/SP", "11900000007", "Cardiologia"),
-                        criarMedico("Dr. Bjarne Stroustrup", "bjarne@med.com", senhaPadrao, "000008/SP", "11900000008", "Gastroenterologia"),
-                        criarMedico("Dr. James Gosling", "james@med.com", senhaPadrao, "000009/SP", "11900000009", "Endocrinologia"),
-                        criarMedico("Dr. Guido van Rossum", "guido@med.com", senhaPadrao, "000010/SP", "11900000010", "Dermatologia"),
-                        criarMedico("Dr. Brendan Eich", "brendan@med.com", senhaPadrao, "000011/SP", "11900000011", "Oftalmologia"),
-                        criarMedico("Dr. Tim Berners-Lee", "tim@med.com", senhaPadrao, "000012/SP", "11900000012", "Medicina de Família e Comunidade"),
-                        criarMedico("Dr. John Carmack", "john@med.com", senhaPadrao, "000013/SP", "11900000013", "Fisiatria (Medicina de Reabilitação)"),
-                        criarMedico("Dr. Anders Hejlsberg", "anders@med.com", senhaPadrao, "000014/SP", "11900000014", "Nefrologia"),
-                        criarMedico("Dra. Barbara Liskov", "barbara@med.com", senhaPadrao, "000015/SP", "11900000015", "Pneumologia")
+                        criarMedico("Dr. Linus Torvalds", "linus@med.com", senhaPadrao, "000001/SP", "11900000001", "Cirurgia Vascular", "Especialista no mapeamento de fluxos e ramificações (branches) do sistema circulatório. Defensor de protocolos médicos de código aberto e colaborativos."),
+                        criarMedico("Dra. Ada Lovelace", "ada@med.com", senhaPadrao, "000002/SP", "11900000002", "Neurologia", "Pioneira na lógica neurológica. Reconhecida mundialmente por prever o potencial de algoritmos complexos no tratamento de distúrbios cognitivos no primeiro século da medicina analítica."),
+                        criarMedico("Dr. Alan Turing", "alan@med.com", senhaPadrao, "000003/SP", "11900000003", "Psiquiatria", "Dedicado à decodificação da mente humana. Especialista na resolução de enigmas comportamentais complexos e pioneiro no teste que avalia a consciência artificial e humana."),
+                        criarMedico("Dra. Grace Hopper", "grace@med.com", senhaPadrao, "000004/SP", "11900000004", "Infectologia", "Especialista com vasta experiência em depurar infecções do sistema. Famosa por ter encontrado o primeiro 'bug' biológico literal em um laboratório naval e erradicá-lo com protocolos estritos."),
+                        criarMedico("Dr. Dennis Ritchie", "dennis@med.com", senhaPadrao, "000005/SP", "11900000005", "Ortopedia", "Ortopedista focado em estruturar as bases fundamentais do corpo. Suas técnicas pioneiras (linguagem C) servem de alicerce para praticamente todos os tratamentos modernos."),
+                        criarMedico("Dr. Ken Thompson", "ken@med.com", senhaPadrao, "000006/SP", "11900000006", "Clínica Médica", "Clínico geral com abordagem minimalista e eficiente. Co-criador de protocolos vitais duradouros que formam o núcleo de clínicas modernas de alta estabilidade."),
+                        criarMedico("Dra. Margaret Hamilton", "margaret@med.com", senhaPadrao, "000007/SP", "11900000007", "Cardiologia", "Cardiologista com precisão espacial. Sua engenharia de software biomédico garantiu suporte vital contínuo, impedindo falhas críticas no coração sob extrema pressão atmosférica."),
+                        criarMedico("Dr. Bjarne Stroustrup", "bjarne@med.com", senhaPadrao, "000008/SP", "11900000008", "Gastroenterologia", "Focado em tratamentos complexos orientados a objetos. Abordagem altamente estruturada (++), melhorando o legado dos tratamentos clássicos com maior robustez e controle."),
+                        criarMedico("Dr. James Gosling", "james@med.com", senhaPadrao, "000009/SP", "11900000009", "Endocrinologia", "Acredita no lema: 'Escreva um tratamento uma vez, e o corpo funcionará em qualquer lugar'. Especialista na máquina virtual que equilibra o sistema hormonal do corpo humano."),
+                        criarMedico("Dr. Guido van Rossum", "guido@med.com", senhaPadrao, "000010/SP", "11900000010", "Dermatologia", "Valoriza a elegância, a simplicidade e a clareza na epiderme. Exige tratamentos com perfeita 'indentação', provando que uma pele limpa é sinal de saúde e boa sintaxe."),
+                        criarMedico("Dr. Brendan Eich", "brendan@med.com", senhaPadrao, "000011/SP", "11900000011", "Oftalmologia", "Dinâmico e ágil. Famoso no mundo médico por ter criado uma terapia visual completa e funcional em apenas 10 dias, que até hoje é utilizada por 99% das clínicas do globo."),
+                        criarMedico("Dr. Tim Berners-Lee", "tim@med.com", senhaPadrao, "000012/SP", "11900000012", "Medicina de Família e Comunidade", "Especialista em conectar a grande teia humana. Foi pioneiro em criar links e pontes de saúde comunitária, interligando a saúde primária mundialmente (WWW)."),
+                        criarMedico("Dr. John Carmack", "john@med.com", senhaPadrao, "000013/SP", "11900000013", "Fisiatria (Medicina de Reabilitação)", "Fisiatra revolucionário. Aplica tecnologias de renderização 3D e motores virtuais ultrarrápidos (como os usados em simulações Doom) para terapias de movimento revolucionárias."),
+                        criarMedico("Dr. Anders Hejlsberg", "anders@med.com", senhaPadrao, "000014/SP", "11900000014", "Nefrologia", "Arquiteto de sistemas renais robustos. Conhecido por sua 'tipagem forte' na filtragem de toxinas, garantindo a integridade dos fluidos e estabilidade sistêmica contínua."),
+                        criarMedico("Dra. Barbara Liskov", "barbara@med.com", senhaPadrao, "000015/SP", "11900000015", "Pneumologia", "Pioneira dos princípios sólidos (SOLID). Criou o rigoroso princípio da substituição saudável, essencial na estruturação de vias respiratórias e modulação clínica moderna.")
                 );
 
                 usuarioRepository.saveAll(lendasTech);
@@ -90,12 +98,12 @@ public class DataSeeder {
                 }
 
                 agendamentoRepository.saveAll(todosAgendamentos);
-                System.out.println("✅ [DATA SEEDER] Lendas médicas inseridas com especialidades reais! Agendas lotadas a partir de 12/05/2026!");
+                System.out.println("✅ [DATA SEEDER] Lendas médicas inseridas com Biografias brilhantes! Agendas lotadas a partir de 12/05/2026!");
             }
         };
     }
 
-    private Usuario criarMedico(String nome, String email, String senha, String crm, String telefone, String especializacao) {
+    private Usuario criarMedico(String nome, String email, String senha, String crm, String telefone, String especializacao, String biografia) {
         Usuario medico = new Usuario();
         medico.setNome(nome);
         medico.setEmail(email);
@@ -104,6 +112,7 @@ public class DataSeeder {
         medico.setCrm(crm);
         medico.setTelefone(telefone);
         medico.setEspecializacao(especializacao);
+        medico.setBiografia(biografia); // NOVO: Inserção da Biografia!
         medico.setStatusValidacao(StatusValidacao.APROVADO);
         return medico;
     }
