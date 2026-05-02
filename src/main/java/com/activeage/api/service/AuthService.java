@@ -18,9 +18,6 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
 
-    /**
-     * Valida as credenciais e gera o token de acesso.
-     */
     public LoginResponseDTO realizarLogin(LoginDTO loginDTO) {
 
         Usuario usuario = usuarioRepository.findByEmail(loginDTO.email())
