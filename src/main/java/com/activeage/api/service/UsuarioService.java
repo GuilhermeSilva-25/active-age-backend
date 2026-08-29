@@ -78,4 +78,18 @@ public class UsuarioService {
 
         return extrasLimpos.isEmpty() ? "Geriatria" : "Geriatria, " + extrasLimpos;
     }
+
+    public void ativarAssinatura(String referenceId) {
+        String idReal = referenceId.replace("MED-", "");
+
+        Usuario usuario = usuarioRepository.findById(idReal)
+                .orElseThrow(() -> new RuntimeException("Médico não encontrado para ativação de assinatura"));
+
+        if (usuario.getTipo() == TipoUsuario.MEDICO) {
+            usuario.setAssinaturaAtiva(true);
+            usuarioRepository.save(usuario);
+        } else {
+            throw new RuntimeException("Usuário informado não é um médico.");
+        }
+    }
 }

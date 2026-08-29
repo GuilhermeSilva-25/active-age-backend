@@ -26,4 +26,5 @@ public class Usuario {
     private StatusValidacao statusValidacao;
     private String mensagemValidacao;
     private String biografia;
+    private boolean assinaturaAtiva = false;
 }

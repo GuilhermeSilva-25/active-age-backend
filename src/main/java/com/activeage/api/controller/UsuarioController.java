@@ -57,4 +57,14 @@ public class UsuarioController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @PutMapping("/medicos/{referenceId}/assinatura/ativar")
+    public ResponseEntity<String> ativarAssinaturaWebhook(@PathVariable String referenceId) {
+        try {
+            usuarioService.ativarAssinatura(referenceId);
+            return ResponseEntity.ok("Assinatura ativada com sucesso pelo Webhook!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
