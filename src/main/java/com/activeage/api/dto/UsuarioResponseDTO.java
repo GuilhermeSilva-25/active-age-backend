@@ -11,5 +11,6 @@ public record UsuarioResponseDTO(
         StatusValidacao statusValidacao,
         String mensagemValidacao,
         String crm,
-        String especializacao
+        String especializacao,
+        boolean assinaturaAtiva
 ) {}
