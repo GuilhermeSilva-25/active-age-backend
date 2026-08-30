@@ -104,7 +104,7 @@ public class DataSeeder {
 
                 usuarioRepository.saveAll(lendasTech);
 
-                LocalDateTime dataBase = LocalDateTime.of(2026, 5, 12, 8, 0).truncatedTo(ChronoUnit.MINUTES);
+                LocalDateTime dataBase = LocalDateTime.of(2026, 9, 1, 8, 0).truncatedTo(ChronoUnit.MINUTES);
                 List<Agendamento> todosAgendamentos = new ArrayList<>();
 
                 for (Usuario medico : lendasTech) {
