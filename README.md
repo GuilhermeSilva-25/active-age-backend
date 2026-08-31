@@ -3,8 +3,8 @@
 <p align="center">
 <img src="https://img.shields.io/badge/Deploy-Render-black?style=for-the-badge&logo=render" alt="Render Deploy" />
 <img src="https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=java&logoColor=white" alt="Java 21" />
-<img src="https://img.shields.io/badge/Spring_Boot-3-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white%22 alt="Spring Boot 3" />
-<img src="https://img.shields.io/badge/Spring_Security-JWT-6DB33F?style=for-the-badge&logo=spring-security&logoColor=white%22 alt="Spring Security" />
+<img src="https://img.shields.io/badge/Spring_Boot-3-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white%22" alt="Spring Boot 3" />
+<img src="https://img.shields.io/badge/Spring_Security-JWT-6DB33F?style=for-the-badge&logo=spring-security&logoColor=white%22" alt="Spring Security" />
 <img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB Atlas" />
 </p>
  
