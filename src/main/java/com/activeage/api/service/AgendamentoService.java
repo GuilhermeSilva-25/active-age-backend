@@ -27,7 +27,7 @@ public class AgendamentoService {
 
     public List<Agendamento> criarHorarios(String medicoId, AgendamentoRequestDTO dto) {
         Usuario medico = usuarioRepository.findById(medicoId)
-                .orElseThrow(() -> new RuntimeException("MÃ©dico nÃ£o encontrado"));
+                .orElseThrow(() -> new RuntimeException("Médico não encontrado"));
 
         BigDecimal valorConsulta = dto.valor() != null ? dto.valor() :
                 (medico.getValorConsulta() != null ? medico.getValorConsulta() : new BigDecimal("180.00"));
@@ -49,9 +49,9 @@ public class AgendamentoService {
                 int intervaloNecessario = Math.max(duracaoConsulta, duracaoExistente);
 
                 if (minutosDiferenca < intervaloNecessario) {
-                    throw new RuntimeException("Conflito de agenda: O horÃ¡rio " +
+                    throw new RuntimeException("Conflito de agenda: O horário " +
                             novoHorario.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) +
-                            " Ã© muito prÃ³ximo de outro agendamento (Intervalo necessÃ¡rio: " + intervaloNecessario + " min).");
+                            " é muito próximo de outro agendamento (Intervalo necessário: " + intervaloNecessario + " min).");
                 }
             }
 
@@ -72,45 +72,74 @@ public class AgendamentoService {
 
     public Agendamento agendarConsulta(String agendamentoId, String pacienteId) {
         Agendamento agenda = agendamentoRepository.findById(agendamentoId)
-                .orElseThrow(() -> new RuntimeException("HorÃ¡rio nÃ£o encontrado"));
+                .orElseThrow(() -> new RuntimeException("Horário não encontrado"));
 
         if (agenda.getStatus() != StatusAgendamento.DISPONIVEL) {
-            throw new RuntimeException("Este horÃ¡rio nÃ£o estÃ¡ mais disponÃ­vel.");
+            throw new RuntimeException("Este horário não está mais disponível.");
         }
 
         Usuario paciente = usuarioRepository.findById(pacienteId)
-                .orElseThrow(() -> new RuntimeException("Paciente nÃ£o encontrado"));
+                .orElseThrow(() -> new RuntimeException("Paciente não encontrado"));
 
         LocalDateTime horaDesejada = agenda.getDataHora().truncatedTo(ChronoUnit.MINUTES);
 
         List<Agendamento> consultasPaciente = agendamentoRepository.findByPacienteIdOrderByDataHoraAsc(pacienteId);
         boolean jaOcupado = consultasPaciente.stream()
-                .anyMatch(c -> (c.getStatus() == StatusAgendamento.AGENDADO || c.getStatus() == StatusAgendamento.CONFIRMADO) &&
+                .anyMatch(c -> (c.getStatus() == StatusAgendamento.AGENDADO || c.getStatus() == StatusAgendamento.CONFIRMADO || c.getStatus() == StatusAgendamento.AGUARDANDO_PAGAMENTO) &&
                         c.getDataHora().truncatedTo(ChronoUnit.MINUTES).equals(horaDesejada));
 
         if (jaOcupado) {
-            throw new RuntimeException("VocÃª jÃ¡ possui uma consulta agendada para este mesmo horÃ¡rio com outro profissional.");
+            throw new RuntimeException("Você já possui uma consulta agendada para este mesmo horário com outro profissional.");
         }
 
         agenda.setPacienteId(pacienteId);
         agenda.setPacienteNome(paciente.getNome());
         agenda.setPacienteCpf(paciente.getCpf());
 
-        agenda.setStatus(StatusAgendamento.AGENDADO);
-        agenda.setLinkTeleconsulta("https://activeage.me/sala/" + UUID.randomUUID().toString().substring(0, 8));
+        agenda.setStatus(StatusAgendamento.AGUARDANDO_PAGAMENTO);
+        agenda.setLinkTeleconsulta(null);
+        agenda.setValorPago(null);
+        agenda.setDataPagamento(null);
 
         return agendamentoRepository.save(agenda);
     }
 
     public Agendamento confirmarPagamento(String agendamentoId, ConfirmarPagamentoDTO dto) {
-        Agendamento agenda = agendamentoRepository.findById(agendamentoId)
-                .orElseThrow(() -> new RuntimeException("Agendamento nÃ£o encontrado para confirmaÃ§Ã£o de pagamento."));
+        String idLimpo = agendamentoId != null && agendamentoId.startsWith("AGEND-")
+                ? agendamentoId.substring(6)
+                : agendamentoId;
 
-        agenda.setStatus(StatusAgendamento.CONFIRMADO);
+        Agendamento agenda = agendamentoRepository.findById(idLimpo)
+                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado para confirmação de pagamento."));
+
+        if (agenda.getStatus() == StatusAgendamento.CANCELADO_PELO_MEDICO) {
+            throw new RuntimeException("Não é possível confirmar pagamento de uma consulta cancelada pelo médico.");
+        }
+
+        BigDecimal valorEsperado = agenda.getValor() != null ? agenda.getValor() : BigDecimal.ZERO;
+        BigDecimal valorRecebido = (dto != null && dto.valorPago() != null) ? dto.valorPago() : valorEsperado;
+
+        if (dto != null && dto.valorPago() != null && valorEsperado.compareTo(BigDecimal.ZERO) > 0) {
+            if (dto.valorPago().compareTo(valorEsperado) < 0) {
+                throw new RuntimeException("Valor pago insuficiente: R$ " + dto.valorPago() + " (esperado: R$ " + valorEsperado + ")");
+            }
+        }
+
+        LocalDateTime dataHoraPagamento = (dto != null && dto.dataPagamento() != null)
+                ? dto.dataPagamento()
+                : LocalDateTime.now();
+
+        agenda.setValorPago(valorRecebido);
+        agenda.setDataPagamento(dataHoraPagamento);
+
         if (dto != null) {
             if (dto.transacaoId() != null) agenda.setTransacaoPagamentoId(dto.transacaoId());
             if (dto.metodo() != null) agenda.setMetodoPagamento(dto.metodo());
-            if (dto.valorPago() != null) agenda.setValor(dto.valorPago());
+        }
+
+        agenda.setStatus(StatusAgendamento.CONFIRMADO);
+        if (agenda.getLinkTeleconsulta() == null || agenda.getLinkTeleconsulta().isBlank()) {
+            agenda.setLinkTeleconsulta("https://activeage.me/sala/" + UUID.randomUUID().toString().substring(0, 8));
         }
 
         return agendamentoRepository.save(agenda);
@@ -118,10 +147,10 @@ public class AgendamentoService {
 
     public Agendamento cancelarConsulta(String agendamentoId, String usuarioCancelouId) {
         Agendamento agenda = agendamentoRepository.findById(agendamentoId)
-                .orElseThrow(() -> new RuntimeException("Agendamento nÃ£o encontrado"));
+                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado"));
 
         Usuario usuario = usuarioRepository.findById(usuarioCancelouId)
-                .orElseThrow(() -> new RuntimeException("UsuÃ¡rio nÃ£o encontrado"));
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         if (usuario.getTipo() == TipoUsuario.PACIENTE) {
             agenda.setStatus(StatusAgendamento.DISPONIVEL);
@@ -131,6 +160,8 @@ public class AgendamentoService {
             agenda.setLinkTeleconsulta(null);
             agenda.setTransacaoPagamentoId(null);
             agenda.setMetodoPagamento(null);
+            agenda.setValorPago(null);
+            agenda.setDataPagamento(null);
         } else {
             agenda.setStatus(StatusAgendamento.CANCELADO_PELO_MEDICO);
         }

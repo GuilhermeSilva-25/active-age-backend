@@ -37,7 +37,10 @@ public class AgendamentoController {
         return ResponseEntity.ok(agendamentoService.agendarConsulta(agendamentoId, pacienteId));
     }
 
-    @PutMapping("/{agendamentoId}/pagamento/confirmar")
+    @PutMapping({
+            "/{agendamentoId}/pagamento/confirmar",
+            "/{agendamentoId}/confirmar-pagamento"
+    })
     public ResponseEntity<Agendamento> confirmarPagamento(
             @PathVariable String agendamentoId,
             @RequestBody(required = false) ConfirmarPagamentoDTO dto

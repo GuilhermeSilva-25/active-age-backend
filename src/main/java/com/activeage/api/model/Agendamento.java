@@ -28,6 +28,8 @@ public class Agendamento {
     private String linkTeleconsulta;
 
     private BigDecimal valor;
+    private BigDecimal valorPago;
+    private LocalDateTime dataPagamento;
     private Integer duracaoMinutos;
     private String transacaoPagamentoId;
     private String metodoPagamento;
