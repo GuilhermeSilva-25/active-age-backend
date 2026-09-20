@@ -1,6 +1,7 @@
 package com.activeage.api.controller;
 
 import com.activeage.api.dto.AgendamentoRequestDTO;
+import com.activeage.api.dto.ConfirmarPagamentoDTO;
 import com.activeage.api.enums.StatusAgendamento;
 import com.activeage.api.model.Agendamento;
 import com.activeage.api.repository.AgendamentoRepository;
@@ -36,6 +37,14 @@ public class AgendamentoController {
         return ResponseEntity.ok(agendamentoService.agendarConsulta(agendamentoId, pacienteId));
     }
 
+    @PutMapping("/{agendamentoId}/pagamento/confirmar")
+    public ResponseEntity<Agendamento> confirmarPagamento(
+            @PathVariable String agendamentoId,
+            @RequestBody(required = false) ConfirmarPagamentoDTO dto
+    ) {
+        return ResponseEntity.ok(agendamentoService.confirmarPagamento(agendamentoId, dto));
+    }
+
     @PutMapping("/cancelar/{agendamentoId}/usuario/{usuarioId}")
     public ResponseEntity<Agendamento> cancelarConsulta(@PathVariable String agendamentoId, @PathVariable String usuarioId) {
         return ResponseEntity.ok(agendamentoService.cancelarConsulta(agendamentoId, usuarioId));
@@ -50,7 +59,6 @@ public class AgendamentoController {
     public ResponseEntity<List<Agendamento>> listarPorMedico(@PathVariable String medicoId) {
         return ResponseEntity.ok(agendamentoRepository.findByMedicoIdOrderByDataHoraAsc(medicoId));
     }
-
 
     public record AvaliacaoDTO(Integer nota, String comentario) {}
 

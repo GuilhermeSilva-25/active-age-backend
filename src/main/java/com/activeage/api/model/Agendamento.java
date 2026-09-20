@@ -5,6 +5,7 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -25,6 +26,11 @@ public class Agendamento {
     private LocalDateTime dataHora;
     private StatusAgendamento status;
     private String linkTeleconsulta;
+
+    private BigDecimal valor;
+    private Integer duracaoMinutos;
+    private String transacaoPagamentoId;
+    private String metodoPagamento;
 
     private Integer notaAvaliacao;
     private String comentarioAvaliacao;

@@ -1,6 +1,7 @@
 package com.activeage.api.service;
 
 import com.activeage.api.dto.AgendamentoRequestDTO;
+import com.activeage.api.dto.ConfirmarPagamentoDTO;
 import com.activeage.api.enums.StatusAgendamento;
 import com.activeage.api.enums.TipoUsuario;
 import com.activeage.api.model.Agendamento;
@@ -10,6 +11,7 @@ import com.activeage.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -25,7 +27,13 @@ public class AgendamentoService {
 
     public List<Agendamento> criarHorarios(String medicoId, AgendamentoRequestDTO dto) {
         Usuario medico = usuarioRepository.findById(medicoId)
-                .orElseThrow(() -> new RuntimeException("Médico não encontrado"));
+                .orElseThrow(() -> new RuntimeException("MÃ©dico nÃ£o encontrado"));
+
+        BigDecimal valorConsulta = dto.valor() != null ? dto.valor() :
+                (medico.getValorConsulta() != null ? medico.getValorConsulta() : new BigDecimal("180.00"));
+
+        int duracaoConsulta = (dto.duracaoMinutos() != null && dto.duracaoMinutos() > 0) ? dto.duracaoMinutos() :
+                (medico.getDuracaoMinutos() != null && medico.getDuracaoMinutos() > 0 ? medico.getDuracaoMinutos() : 45);
 
         List<Agendamento> horariosExistentes = agendamentoRepository.findByMedicoIdOrderByDataHoraAsc(medicoId)
                 .stream()
@@ -37,11 +45,13 @@ public class AgendamentoService {
 
             for (Agendamento existente : horariosExistentes) {
                 long minutosDiferenca = Math.abs(Duration.between(existente.getDataHora(), novoHorario).toMinutes());
+                int duracaoExistente = existente.getDuracaoMinutos() != null ? existente.getDuracaoMinutos() : duracaoConsulta;
+                int intervaloNecessario = Math.max(duracaoConsulta, duracaoExistente);
 
-                if (minutosDiferenca < 40) {
-                    throw new RuntimeException("Conflito de agenda: O horário " +
+                if (minutosDiferenca < intervaloNecessario) {
+                    throw new RuntimeException("Conflito de agenda: O horÃ¡rio " +
                             novoHorario.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) +
-                            " é muito próximo de outro agendamento (Intervalo mínimo: 40 min).");
+                            " Ã© muito prÃ³ximo de outro agendamento (Intervalo necessÃ¡rio: " + intervaloNecessario + " min).");
                 }
             }
 
@@ -52,6 +62,8 @@ public class AgendamentoService {
             a.setMedicoEspecializacao(medico.getEspecializacao());
             a.setDataHora(novoHorario);
             a.setStatus(StatusAgendamento.DISPONIVEL);
+            a.setValor(valorConsulta);
+            a.setDuracaoMinutos(duracaoConsulta);
             return a;
         }).toList();
 
@@ -60,24 +72,24 @@ public class AgendamentoService {
 
     public Agendamento agendarConsulta(String agendamentoId, String pacienteId) {
         Agendamento agenda = agendamentoRepository.findById(agendamentoId)
-                .orElseThrow(() -> new RuntimeException("Horário não encontrado"));
+                .orElseThrow(() -> new RuntimeException("HorÃ¡rio nÃ£o encontrado"));
 
         if (agenda.getStatus() != StatusAgendamento.DISPONIVEL) {
-            throw new RuntimeException("Este horário não está mais disponível.");
+            throw new RuntimeException("Este horÃ¡rio nÃ£o estÃ¡ mais disponÃ­vel.");
         }
 
         Usuario paciente = usuarioRepository.findById(pacienteId)
-                .orElseThrow(() -> new RuntimeException("Paciente não encontrado"));
+                .orElseThrow(() -> new RuntimeException("Paciente nÃ£o encontrado"));
 
         LocalDateTime horaDesejada = agenda.getDataHora().truncatedTo(ChronoUnit.MINUTES);
 
         List<Agendamento> consultasPaciente = agendamentoRepository.findByPacienteIdOrderByDataHoraAsc(pacienteId);
         boolean jaOcupado = consultasPaciente.stream()
-                .anyMatch(c -> c.getStatus() == StatusAgendamento.AGENDADO &&
+                .anyMatch(c -> (c.getStatus() == StatusAgendamento.AGENDADO || c.getStatus() == StatusAgendamento.CONFIRMADO) &&
                         c.getDataHora().truncatedTo(ChronoUnit.MINUTES).equals(horaDesejada));
 
         if (jaOcupado) {
-            throw new RuntimeException("Você já possui uma consulta agendada para este mesmo horário com outro profissional.");
+            throw new RuntimeException("VocÃª jÃ¡ possui uma consulta agendada para este mesmo horÃ¡rio com outro profissional.");
         }
 
         agenda.setPacienteId(pacienteId);
@@ -90,12 +102,26 @@ public class AgendamentoService {
         return agendamentoRepository.save(agenda);
     }
 
+    public Agendamento confirmarPagamento(String agendamentoId, ConfirmarPagamentoDTO dto) {
+        Agendamento agenda = agendamentoRepository.findById(agendamentoId)
+                .orElseThrow(() -> new RuntimeException("Agendamento nÃ£o encontrado para confirmaÃ§Ã£o de pagamento."));
+
+        agenda.setStatus(StatusAgendamento.CONFIRMADO);
+        if (dto != null) {
+            if (dto.transacaoId() != null) agenda.setTransacaoPagamentoId(dto.transacaoId());
+            if (dto.metodo() != null) agenda.setMetodoPagamento(dto.metodo());
+            if (dto.valorPago() != null) agenda.setValor(dto.valorPago());
+        }
+
+        return agendamentoRepository.save(agenda);
+    }
+
     public Agendamento cancelarConsulta(String agendamentoId, String usuarioCancelouId) {
         Agendamento agenda = agendamentoRepository.findById(agendamentoId)
-                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado"));
+                .orElseThrow(() -> new RuntimeException("Agendamento nÃ£o encontrado"));
 
         Usuario usuario = usuarioRepository.findById(usuarioCancelouId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new RuntimeException("UsuÃ¡rio nÃ£o encontrado"));
 
         if (usuario.getTipo() == TipoUsuario.PACIENTE) {
             agenda.setStatus(StatusAgendamento.DISPONIVEL);
@@ -103,6 +129,8 @@ public class AgendamentoService {
             agenda.setPacienteNome(null);
             agenda.setPacienteCpf(null);
             agenda.setLinkTeleconsulta(null);
+            agenda.setTransacaoPagamentoId(null);
+            agenda.setMetodoPagamento(null);
         } else {
             agenda.setStatus(StatusAgendamento.CANCELADO_PELO_MEDICO);
         }

@@ -22,7 +22,7 @@ public class UsuarioService {
 
     public Usuario cadastrarUsuario(UsuarioRegistroDTO dto) {
         if (usuarioRepository.findByEmail(dto.email()).isPresent()) {
-            throw new RuntimeException("Este e-mail já está em uso.");
+            throw new RuntimeException("Este e-mail jÃ¡ estÃ¡ em uso.");
         }
 
         Usuario novoUsuario = new Usuario();
@@ -44,7 +44,7 @@ public class UsuarioService {
 
     public Usuario atualizarPerfil(String id, UsuarioUpdateDTO dto) {
         Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new RuntimeException("UsuÃ¡rio nÃ£o encontrado"));
 
         if (dto.nome() != null && !dto.nome().isBlank()) usuario.setNome(dto.nome());
         if (dto.telefone() != null) usuario.setTelefone(dto.telefone());
@@ -52,7 +52,7 @@ public class UsuarioService {
         if (usuario.getTipo() == TipoUsuario.MEDICO) {
             if (dto.crm() != null && !dto.crm().equals(usuario.getCrm())) {
                 if (usuario.getStatusValidacao() == StatusValidacao.APROVADO || usuario.getStatusValidacao() == StatusValidacao.EM_ANALISE) {
-                    throw new RuntimeException("O CRM não pode ser alterado durante ou após a análise.");
+                    throw new RuntimeException("O CRM nÃ£o pode ser alterado durante ou apÃ³s a anÃ¡lise.");
                 }
                 usuario.setCrm(dto.crm());
                 if (usuario.getStatusValidacao() == StatusValidacao.REPROVADO) {
@@ -63,6 +63,14 @@ public class UsuarioService {
 
             if (dto.especializacao() != null) {
                 usuario.setEspecializacao(formatarEspecializacao(dto.especializacao()));
+            }
+
+            if (dto.valorConsulta() != null) {
+                usuario.setValorConsulta(dto.valorConsulta());
+            }
+
+            if (dto.duracaoMinutos() != null) {
+                usuario.setDuracaoMinutos(dto.duracaoMinutos());
             }
         }
         return usuarioRepository.save(usuario);
@@ -83,13 +91,13 @@ public class UsuarioService {
         String idReal = referenceId.replace("MED-", "");
 
         Usuario usuario = usuarioRepository.findById(idReal)
-                .orElseThrow(() -> new RuntimeException("Médico não encontrado para ativação de assinatura"));
+                .orElseThrow(() -> new RuntimeException("MÃ©dico nÃ£o encontrado para ativaÃ§Ã£o de assinatura"));
 
         if (usuario.getTipo() == TipoUsuario.MEDICO) {
             usuario.setAssinaturaAtiva(true);
             usuarioRepository.save(usuario);
         } else {
-            throw new RuntimeException("Usuário informado não é um médico.");
+            throw new RuntimeException("UsuÃ¡rio informado nÃ£o Ã© um mÃ©dico.");
         }
     }
 }

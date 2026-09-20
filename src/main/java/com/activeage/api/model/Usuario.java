@@ -6,9 +6,8 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-/**
- * Entidade que representa um Usuário no banco de dados MongoDB.
- */
+import java.math.BigDecimal;
+
 @Data
 @Document(collection = "usuarios")
 public class Usuario {
@@ -27,4 +26,7 @@ public class Usuario {
     private String mensagemValidacao;
     private String biografia;
     private boolean assinaturaAtiva = false;
+
+    private BigDecimal valorConsulta;
+    private Integer duracaoMinutos;
 }

@@ -21,7 +21,7 @@ public class AuthService {
     public LoginResponseDTO realizarLogin(LoginDTO loginDTO) {
 
         Usuario usuario = usuarioRepository.findByEmail(loginDTO.email())
-                .orElseThrow(() -> new RuntimeException("E-mail não encontrado"));
+                .orElseThrow(() -> new RuntimeException("E-mail nÃ£o encontrado"));
 
         if (!passwordEncoder.matches(loginDTO.senha(), usuario.getSenha())) {
             throw new RuntimeException("Senha incorreta");
@@ -38,7 +38,9 @@ public class AuthService {
                 usuario.getMensagemValidacao(),
                 usuario.getCrm(),
                 usuario.getEspecializacao(),
-                usuario.isAssinaturaAtiva()
+                usuario.isAssinaturaAtiva(),
+                usuario.getValorConsulta(),
+                usuario.getDuracaoMinutos()
         );
 
         return new LoginResponseDTO(token, usuarioSeguro);
