@@ -97,11 +97,29 @@ public class AgendamentoService {
         agenda.setPacienteCpf(paciente.getCpf());
 
         agenda.setStatus(StatusAgendamento.AGUARDANDO_PAGAMENTO);
+        agenda.setDataBloqueioVaga(LocalDateTime.now());
         agenda.setLinkTeleconsulta(null);
         agenda.setValorPago(null);
         agenda.setDataPagamento(null);
 
         return agendamentoRepository.save(agenda);
+    }
+
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 60000)
+    public void limparVagasNaoPagas() {
+        LocalDateTime tempoLimite = LocalDateTime.now().minusMinutes(15);
+        List<Agendamento> aguardando = agendamentoRepository.findByStatus(StatusAgendamento.AGUARDANDO_PAGAMENTO);
+        for (Agendamento agenda : aguardando) {
+            if (agenda.getDataBloqueioVaga() != null && agenda.getDataBloqueioVaga().isBefore(tempoLimite)) {
+                agenda.setPacienteId(null);
+                agenda.setPacienteNome(null);
+                agenda.setPacienteCpf(null);
+                agenda.setStatus(StatusAgendamento.DISPONIVEL);
+                agenda.setDataBloqueioVaga(null);
+                agendamentoRepository.save(agenda);
+                System.out.println("Vaga liberada por falta de pagamento (15 min excedidos): " + agenda.getId());
+            }
+        }
     }
 
     public Agendamento confirmarPagamento(String agendamentoId, ConfirmarPagamentoDTO dto) {

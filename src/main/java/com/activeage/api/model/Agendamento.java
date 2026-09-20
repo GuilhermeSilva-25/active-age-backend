@@ -36,4 +36,6 @@ public class Agendamento {
 
     private Integer notaAvaliacao;
     private String comentarioAvaliacao;
+
+    private LocalDateTime dataBloqueioVaga;
 }

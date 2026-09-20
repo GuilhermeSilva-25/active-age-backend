@@ -12,4 +12,5 @@ public interface AgendamentoRepository extends MongoRepository<Agendamento, Stri
     List<Agendamento> findByMedicoIdOrderByDataHoraAsc(String medicoId);
     List<Agendamento> findByPacienteIdOrderByDataHoraAsc(String pacienteId);
     List<Agendamento> findByMedicoIdAndNotaAvaliacaoIsNotNullOrderByDataHoraDesc(String medicoId);
+    List<Agendamento> findByStatus(StatusAgendamento status);
 }
