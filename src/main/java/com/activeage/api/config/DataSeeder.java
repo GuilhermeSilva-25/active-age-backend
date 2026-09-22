@@ -145,6 +145,11 @@ public class DataSeeder {
         medico.setEspecializacao(especializacao);
         medico.setBiografia(biografia);
         medico.setStatusValidacao(StatusValidacao.APROVADO);
+        
+        long randomValor = Math.round(100 + Math.random() * 250);
+        medico.setValorConsulta(java.math.BigDecimal.valueOf(randomValor));
+        medico.setDuracaoMinutos(40);
+        
         return medico;
     }
 
@@ -156,6 +161,10 @@ public class DataSeeder {
         a.setMedicoEspecializacao(medico.getEspecializacao());
         a.setDataHora(dataHora);
         a.setStatus(StatusAgendamento.DISPONIVEL);
+        
+        a.setValor(medico.getValorConsulta());
+        a.setDuracaoMinutos(medico.getDuracaoMinutos());
+        
         return a;
     }
 }
