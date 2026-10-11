@@ -137,3 +137,4 @@ class AgendamentoServiceTest {
         assertEquals(new BigDecimal("180.00"), resultado.getValorReembolsado());
     }
 }
+
