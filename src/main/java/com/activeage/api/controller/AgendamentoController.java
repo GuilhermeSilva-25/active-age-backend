@@ -53,6 +53,17 @@ public class AgendamentoController {
         return ResponseEntity.ok(agendamentoService.cancelarConsulta(agendamentoId, usuarioId));
     }
 
+    public record ReembolsoManualDTO(String motivo) {}
+
+    @PostMapping("/{agendamentoId}/reembolsar")
+    public ResponseEntity<Agendamento> reembolsarConsulta(
+            @PathVariable String agendamentoId,
+            @RequestBody(required = false) ReembolsoManualDTO dto
+    ) {
+        String motivo = dto != null ? dto.motivo() : "Reembolso solicitado administrativamente";
+        return ResponseEntity.ok(agendamentoService.processarReembolsoManual(agendamentoId, motivo));
+    }
+
     @GetMapping("/paciente/{pacienteId}")
     public ResponseEntity<List<Agendamento>> listarPorPaciente(@PathVariable String pacienteId) {
         return ResponseEntity.ok(agendamentoRepository.findByPacienteIdOrderByDataHoraAsc(pacienteId));

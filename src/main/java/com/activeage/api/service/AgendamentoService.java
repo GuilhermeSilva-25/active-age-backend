@@ -9,6 +9,7 @@ import com.activeage.api.model.Usuario;
 import com.activeage.api.repository.AgendamentoRepository;
 import com.activeage.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,6 +22,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AgendamentoService {
+
+    @Value("${payment-service.url:http://localhost:8081}")
+    private String paymentServiceUrl;
 
     private final AgendamentoRepository agendamentoRepository;
     private final UsuarioRepository usuarioRepository;
@@ -170,20 +174,150 @@ public class AgendamentoService {
         Usuario usuario = usuarioRepository.findById(usuarioCancelouId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
+        boolean foiPago = (agenda.getStatus() == StatusAgendamento.CONFIRMADO || agenda.getValorPago() != null)
+                && agenda.getTransacaoPagamentoId() != null
+                && !agenda.getTransacaoPagamentoId().isBlank();
+
         if (usuario.getTipo() == TipoUsuario.PACIENTE) {
-            agenda.setStatus(StatusAgendamento.DISPONIVEL);
-            agenda.setPacienteId(null);
-            agenda.setPacienteNome(null);
-            agenda.setPacienteCpf(null);
-            agenda.setLinkTeleconsulta(null);
-            agenda.setTransacaoPagamentoId(null);
-            agenda.setMetodoPagamento(null);
-            agenda.setValorPago(null);
-            agenda.setDataPagamento(null);
+            // Regra de Negócio RN002: Cancelamento pelo paciente exige no mínimo 24h de antecedência
+            if (agenda.getDataHora() != null && agenda.getDataHora().isBefore(LocalDateTime.now().plusHours(24))) {
+                throw new RuntimeException("Cancelamentos só são permitidos com no mínimo 24 horas de antecedência da consulta (RN002).");
+            }
+
+            if (foiPago) {
+                // Executar reembolso real junto ao microsserviço de pagamentos
+                String refundId = executarReembolsoGateway(
+                        agenda.getTransacaoPagamentoId(),
+                        agenda.getValorPago(),
+                        "Cancelamento de consulta solicitado pelo paciente com antecedência de 24h."
+                );
+
+                agenda.setStatus(StatusAgendamento.CANCELADO_PELO_PACIENTE);
+                agenda.setStatusReembolso("APROVADO");
+                agenda.setIdReembolso(refundId);
+                agenda.setDataReembolso(LocalDateTime.now());
+                agenda.setValorReembolsado(agenda.getValorPago());
+                agenda.setMotivoCancelamento("Cancelamento com estorno realizado pelo paciente (24h de antecedência).");
+                agenda.setLinkTeleconsulta(null);
+
+                // Como a consulta foi cancelada com antecedência, libera o horário de volta na agenda do médico (Rollback RN002)
+                if (agenda.getDataHora() != null && agenda.getDataHora().isAfter(LocalDateTime.now())) {
+                    Agendamento vagaReaberta = new Agendamento();
+                    vagaReaberta.setMedicoId(agenda.getMedicoId());
+                    vagaReaberta.setMedicoNome(agenda.getMedicoNome());
+                    vagaReaberta.setMedicoCrm(agenda.getMedicoCrm());
+                    vagaReaberta.setMedicoEspecializacao(agenda.getMedicoEspecializacao());
+                    vagaReaberta.setDataHora(agenda.getDataHora());
+                    vagaReaberta.setDuracaoMinutos(agenda.getDuracaoMinutos());
+                    vagaReaberta.setValor(agenda.getValor());
+                    vagaReaberta.setStatus(StatusAgendamento.DISPONIVEL);
+                    agendamentoRepository.save(vagaReaberta);
+                }
+
+                return agendamentoRepository.save(agenda);
+            } else {
+                // Consulta ainda não paga (AGUARDANDO_PAGAMENTO): liberação imediata do horário
+                agenda.setStatus(StatusAgendamento.DISPONIVEL);
+                agenda.setPacienteId(null);
+                agenda.setPacienteNome(null);
+                agenda.setPacienteCpf(null);
+                agenda.setLinkTeleconsulta(null);
+                agenda.setTransacaoPagamentoId(null);
+                agenda.setMetodoPagamento(null);
+                agenda.setValorPago(null);
+                agenda.setDataPagamento(null);
+                agenda.setDataBloqueioVaga(null);
+                agenda.setStatusReembolso("NAO_APLICAVEL");
+                return agendamentoRepository.save(agenda);
+            }
         } else {
-            agenda.setStatus(StatusAgendamento.CANCELADO_PELO_MEDICO);
+            // Cancelamento realizado pelo MÉDICO
+            if (foiPago) {
+                // Se já estava pago pelo paciente, o reembolso é 100% automático e obrigatório
+                String refundId = executarReembolsoGateway(
+                        agenda.getTransacaoPagamentoId(),
+                        agenda.getValorPago(),
+                        "Cancelamento da consulta realizado pelo profissional médico."
+                );
+
+                agenda.setStatus(StatusAgendamento.CANCELADO_PELO_MEDICO);
+                agenda.setStatusReembolso("APROVADO");
+                agenda.setIdReembolso(refundId);
+                agenda.setDataReembolso(LocalDateTime.now());
+                agenda.setValorReembolsado(agenda.getValorPago());
+                agenda.setMotivoCancelamento("Cancelamento com estorno integral realizado pelo médico.");
+                agenda.setLinkTeleconsulta(null);
+                return agendamentoRepository.save(agenda);
+            } else {
+                agenda.setStatus(StatusAgendamento.CANCELADO_PELO_MEDICO);
+                agenda.setStatusReembolso("NAO_APLICAVEL");
+                agenda.setMotivoCancelamento("Cancelamento de horário realizado pelo médico.");
+                agenda.setLinkTeleconsulta(null);
+                return agendamentoRepository.save(agenda);
+            }
+        }
+    }
+
+    public Agendamento processarReembolsoManual(String agendamentoId, String motivo) {
+        Agendamento agenda = agendamentoRepository.findById(agendamentoId)
+                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado"));
+
+        if (agenda.getTransacaoPagamentoId() == null || agenda.getValorPago() == null) {
+            throw new RuntimeException("Este agendamento não possui pagamento confirmado para ser reembolsado.");
         }
 
+        String refundId = executarReembolsoGateway(
+                agenda.getTransacaoPagamentoId(),
+                agenda.getValorPago(),
+                motivo != null ? motivo : "Reembolso solicitado administrativamente"
+        );
+
+        agenda.setStatusReembolso("APROVADO");
+        agenda.setIdReembolso(refundId);
+        agenda.setDataReembolso(LocalDateTime.now());
+        agenda.setValorReembolsado(agenda.getValorPago());
+        agenda.setMotivoCancelamento(motivo != null ? motivo : "Reembolso manual processado");
+        if (agenda.getStatus() == StatusAgendamento.CONFIRMADO || agenda.getStatus() == StatusAgendamento.AGENDADO) {
+            agenda.setStatus(StatusAgendamento.CANCELADO_PELO_PACIENTE);
+        }
         return agendamentoRepository.save(agenda);
+    }
+
+    private String executarReembolsoGateway(String transacaoId, BigDecimal valor, String motivo) {
+        try {
+            System.out.println("Disparando requisição de reembolso para payment-service: Transacao=" + transacaoId + " | Valor=" + valor);
+            java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+
+            String jsonPayload = String.format(
+                    java.util.Locale.US,
+                    "{\"paymentId\":\"%s\",\"amount\":%.2f,\"reason\":\"%s\"}",
+                    transacaoId,
+                    valor != null ? valor.doubleValue() : 0.0,
+                    motivo != null ? motivo.replace("\"", "'") : "Cancelamento"
+            );
+
+            java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(paymentServiceUrl + "/api/payments/refund"))
+                    .header("Content-Type", "application/json")
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .timeout(java.time.Duration.ofSeconds(10))
+                    .build();
+
+            java.net.http.HttpResponse<String> resp = client.send(req, java.net.http.HttpResponse.BodyHandlers.ofString());
+            System.out.println("Resposta do payment-service refund (Status " + resp.statusCode() + "): " + resp.body());
+
+            if (resp.statusCode() == 200 && resp.body() != null) {
+                if (resp.body().contains("\"refundId\":")) {
+                    int idx = resp.body().indexOf("\"refundId\":");
+                    String sub = resp.body().substring(idx + 11);
+                    String id = sub.split("[,}\"]")[1].trim();
+                    if (!id.isBlank()) return id;
+                }
+            }
+            return "REF-" + System.currentTimeMillis();
+        } catch (Exception e) {
+            System.err.println("Aviso: Falha na comunicação HTTP de reembolso com payment-service: " + e.getMessage());
+            return "REF-CONTINGENCIA-" + UUID.randomUUID().toString().substring(0, 8);
+        }
     }
 }

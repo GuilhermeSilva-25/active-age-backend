@@ -38,4 +38,11 @@ public class Agendamento {
     private String comentarioAvaliacao;
 
     private LocalDateTime dataBloqueioVaga;
+
+    // Campos dedicados ao módulo de estorno e reembolso financeiro
+    private String statusReembolso;
+    private String idReembolso;
+    private LocalDateTime dataReembolso;
+    private BigDecimal valorReembolsado;
+    private String motivoCancelamento;
 }
