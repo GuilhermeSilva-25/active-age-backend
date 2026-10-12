@@ -7,6 +7,7 @@ import com.activeage.api.model.Usuario;
 import com.activeage.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class ValidacaoController {
 
     // 1. Médico solicita validação
     @PostMapping("/solicitar/{id}")
+    @PreAuthorize("hasRole('MEDICO')")
     public ResponseEntity<Usuario> solicitarValidacao(@PathVariable String id) {
         Usuario medico = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Médico não encontrado"));
@@ -29,6 +31,7 @@ public class ValidacaoController {
     }
 
     @GetMapping("/pendentes")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Usuario>> listarPendentes() {
         // Busca todos e filtra apenas os Médicos que estão EM_ANALISE
         List<Usuario> pendentes = usuarioRepository.findAll().stream()
@@ -38,6 +41,7 @@ public class ValidacaoController {
     }
 
     @PutMapping("/avaliar/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Usuario> avaliarMedico(@PathVariable String id, @RequestBody ValidacaoRequestDTO dto) {
         Usuario medico = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Médico não encontrado"));

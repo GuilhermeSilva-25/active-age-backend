@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +32,7 @@ public class UsuarioController {
     }
 
     @PutMapping("/perfil/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Usuario> atualizarPerfil(@PathVariable String id, @RequestBody UsuarioUpdateDTO dto) {
         try {
             Usuario usuarioAtualizado = usuarioService.atualizarPerfil(id, dto);
@@ -52,6 +54,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Usuario> buscarPorId(@PathVariable String id) {
         return usuarioRepository.findById(id)
                 .map(ResponseEntity::ok)
