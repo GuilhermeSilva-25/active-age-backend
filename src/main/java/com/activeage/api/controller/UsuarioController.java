@@ -54,10 +54,12 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Usuario> buscarPorId(@PathVariable String id) {
         return usuarioRepository.findById(id)
-                .map(ResponseEntity::ok)
+                .map(u -> {
+                    u.setSenha(null);
+                    return ResponseEntity.ok(u);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 

@@ -38,12 +38,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/usuarios/medicos").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/medicos/*/assinatura/ativar").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/agendamentos/disponiveis/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/agendamentos/medico/*/avaliacoes").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/agendamentos/*/pagamento/confirmar", "/api/agendamentos/*/confirmar-pagamento").permitAll()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\": \"Não autorizado: Token ausente ou inválido\"}");
+                        })
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
 
