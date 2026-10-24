@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/agendamentos/disponiveis/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/agendamentos/medico/*/avaliacoes").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/agendamentos/*/pagamento/confirmar", "/api/agendamentos/*/confirmar-pagamento").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
